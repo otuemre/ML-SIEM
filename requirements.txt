@@ -1,0 +1,13 @@
+tensorflow==2.10.1
+numpy==1.26.4
+pandas==2.3.0
+dask==2025.5.1
+matplotlib==3.10.3
+seaborn==0.13.2
+geoip2==5.1.0
+jupyter==1.1.1
+ipykernel==6.29.5
+notebook==7.4.3
+tensorflow-io-gcs-filesystem==0.31.0
+tensorboard==2.10.1
+scipy==1.13.1
