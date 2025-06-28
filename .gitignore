@@ -1,0 +1,99 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyCharm
+.idea/
+
+# VS Code (optional)
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python egg and distribution
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook outputs
+*.nbconvert.ipynb
+
+# Model files
+*.h5
+*.hdf5
+*.ckpt
+*.pth
+*.pt
+*.joblib
+*.pkl
+*.sav
+
+# Dataset files
+*.csv
+*.tsv
+*.json
+*.xlsx
+*.zip
+
+# TensorBoard logs
+logs/
+
+# mypy
+.mypy_cache/
+
+# pyre
+.pyre/
+
+# profiling
+.prof
+
+# Local experiments, backups
+*.bak
+*.tmp
+*.log
+
+# Ignore data cache or export folders
+data/
+outputs/
+checkpoints/
