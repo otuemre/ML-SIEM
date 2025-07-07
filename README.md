@@ -100,3 +100,6 @@ project-root/
 📂 [GitHub](https://github.com/otuemre)
 
 ---
+
+## License
+Licensed under the [MIT License](LICENSE.md). You’re free to use and modify responsibly.
