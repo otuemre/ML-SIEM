@@ -128,9 +128,22 @@ def encode(df):
 
     return df, encoders
 
+def scale(df):
+    cols_to_scale = [
+        'country_code', 'device_type', 'is_login_success', 'is_attack_ip',
+        'login_hour', 'login_day', 'browser_name', 'os_name'
+    ]
+
+    scaler = MinMaxScaler()
+
+    df[cols_to_scale] = scaler.fit_transform(df[cols_to_scale])
+
+    return df, scaler
 
 if __name__ == '__main__':
     ddf = load_data('rba-dataset.csv')
     ddf = process_features(ddf)
     ddf = ddf.compute()
     ddf, encoders = encode(ddf)
+    ddf, scaler = scale(ddf)
+
