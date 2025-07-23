@@ -112,7 +112,25 @@ def process_features(df):
 
     return df
 
+# Preprocessing
+def encode(df):
+    cols_to_encode = ['country_code', 'device_type', 'browser_name', 'os_name']
+    encoders = {}
+
+    for col in cols_to_encode:
+        label_encoder = LabelEncoder()
+        df[col] = label_encoder.fit_transform(df[col].astype(str))
+        encoders[col] = label_encoder
+
+    bool_cols = ['is_login_success', 'is_attack_ip', 'is_account_takeover']
+    for col in bool_cols:
+        df[col] = df[col].astype(int)
+
+    return df, encoders
+
+
 if __name__ == '__main__':
     ddf = load_data('rba-dataset.csv')
     ddf = process_features(ddf)
-    save_df(ddf)
+    ddf = ddf.compute()
+    ddf, encoders = encode(ddf)
