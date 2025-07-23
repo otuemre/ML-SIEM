@@ -140,10 +140,43 @@ def scale(df):
 
     return df, scaler
 
+def cast_type(df):
+    df['country_code'] = df['country_code'].astype(np.float32)
+    df['device_type'] = df['device_type'].astype(np.float32)
+    df['is_login_success'] = df['is_login_success'].astype(np.float32)
+    df['is_attack_ip'] = df['is_attack_ip'].astype(np.float32)
+    df['login_hour'] = df['login_hour'].astype(np.float32)
+    df['login_day'] = df['login_day'].astype(np.float32)
+    df['browser_name'] = df['browser_name'].astype(np.float32)
+    df['os_name'] = df['os_name'].astype(np.float32)
+    df['ip_1'] = df['ip_1'].astype(np.float32)
+    df['ip_2'] = df['ip_2'].astype(np.float32)
+    df['ip_3'] = df['ip_3'].astype(np.float32)
+    df['ip_4'] = df['ip_4'].astype(np.float32)
+
+    return df
+
+def split_test_train(df):
+    normal_data = df[df['is_account_takeover'] == 0]
+    anomalous_data = df[df['is_account_takeover'] == 1]
+
+    train_data = normal_data.sample(frac=0.8, random_state=42)
+    remaining_normal = dd.concat([normal_data, train_data]).drop_duplicates()
+    test_data = dd.concat([remaining_normal, anomalous_data])
+
+    X_train = train_data.drop(columns=['is_account_takeover'])
+    y_train = test_data.drop(columns=['is_account_takeover'])
+    y_test = test_data['is_account_takeover'].values
+
+    return X_train, y_train, y_test
+
+
 if __name__ == '__main__':
     ddf = load_data('rba-dataset.csv')
     ddf = process_features(ddf)
     ddf = ddf.compute()
     ddf, encoders = encode(ddf)
     ddf, scaler = scale(ddf)
+    ddf = cast_type(ddf)
+    X_train, y_train, y_test = split_test_train(ddf)
 
