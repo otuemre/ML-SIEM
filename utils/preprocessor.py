@@ -97,16 +97,18 @@ class Preprocessor:
         print(f"Dropped {original_len - new_len} NaNs ({(original_len - new_len) / original_len:.2%})")
 
 
-    def __handle_duplicates(self):
+    def handle_duplicates(self, dataframe):
         print('[INFO] - Dropping Duplicated Values...')
 
         # Calculate the Size before and after duplicates
-        original_len = len(self.df)
-        self.df = self.df.drop_duplicates()
-        new_len = len(self.df)
+        original_len = len(dataframe)
+        dataframe = dataframe.drop_duplicates()
+        new_len = len(dataframe)
 
         # Output the result
         print(f"Dropped {original_len - new_len} duplicates ({(original_len - new_len) / original_len:.2%})")
+
+        return dataframe
 
     def process_features(self):
         print('[INFO] - Starting to Preprocess Dataset...')
@@ -198,7 +200,7 @@ class Preprocessor:
         full_path = os.path.join(self.data_output, 'preprocessed.csv')
 
         # Create Folder if NOT Exists
-        os.makedirs(self.data_path, exist_ok=True)
+        # os.makedirs(self.data_path, exist_ok=True)
 
         # Save Dataset
         self.df.to_csv(full_path, index=False, single_file=True)
@@ -212,7 +214,7 @@ class Preprocessor:
         full_path = os.path.join(self.model_output, 'label_encoders.pkl')
 
         # Create Folder if NOT Exists
-        os.makedirs(self.model_output, exist_ok=True)
+        # os.makedirs(self.model_output, exist_ok=True)
 
         # Save the Encoders
         joblib.dump(self.encoders, full_path)
@@ -226,7 +228,7 @@ class Preprocessor:
         full_path = os.path.join(self.model_output, 'minmax_scaler.pkl')
 
         # Create Folder if NOT Exists
-        os.makedirs(self.model_output, exist_ok=True)
+        # os.makedirs(self.model_output, exist_ok=True)
 
         # Save the Encoders
         joblib.dump(self.scaler, full_path)
