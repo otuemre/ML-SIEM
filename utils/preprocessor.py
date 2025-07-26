@@ -96,8 +96,8 @@ class Preprocessor:
         # Output the result
         print(f"Dropped {original_len - new_len} NaNs ({(original_len - new_len) / original_len:.2%})")
 
-
-    def handle_duplicates(self, dataframe):
+    @staticmethod
+    def handle_duplicates(dataframe):
         print('[INFO] - Dropping Duplicated Values...')
 
         # Calculate the Size before and after duplicates
@@ -110,7 +110,7 @@ class Preprocessor:
 
         return dataframe
 
-    def process_features(self):
+    def process_features(self, output=False):
         print('[INFO] - Starting to Preprocess Dataset...')
 
         # Load the Dataset
@@ -128,7 +128,13 @@ class Preprocessor:
         # Compute Dask DataFrame to apply preprocessing
         self.df = self.df.compute()
 
-    def encode_train(self):
+        # Return condition
+        if output:
+            return self.df
+
+        return None
+
+    def encode_train(self, output=False):
         print("[INFO] - Encoding Columns...")
 
         # Check if Dask DataFrame
@@ -152,7 +158,13 @@ class Preprocessor:
         for col in bool_cols:
             self.df[col] = self.df[col].astype(int)
 
-    def scale_train(self):
+        # Return condition
+        if output:
+            return self.df, self.encoders
+
+        return None
+
+    def scale_train(self, output=False):
         print("[INFO] - Scaling Columns...")
 
         # Check if Dask DataFrame
@@ -171,7 +183,13 @@ class Preprocessor:
         # Scale the Columns
         self.df[cols_to_scale] = self.scaler.fit_transform(self.df[cols_to_scale])
 
-    def cast_types(self, force_dask):
+        # Return condition
+        if output:
+            return self.df, self.encoders
+
+        return None
+
+    def cast_types(self, force_dask, output=False):
         print("[INFO] - Casting Data Types...")
 
         # Check if Pandas DataFrame
@@ -192,6 +210,12 @@ class Preprocessor:
         self.df['ip_2'] = self.df['ip_2'].astype(np.float32)
         self.df['ip_3'] = self.df['ip_3'].astype(np.float32)
         self.df['ip_4'] = self.df['ip_4'].astype(np.float32)
+
+        # Return condition
+        if output:
+            return self.df
+
+        return None
 
     def save_dataset(self):
         print(f'[INFO] - Saving Dataset to {self.data_output}/preprocessed.csv')
