@@ -5,10 +5,11 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 
 import joblib
+import logging
 import os
 
 class Preprocessor:
-    def __init__(self, data_path, data_output, model_output):
+    def __init__(self, data_path, data_output, model_output, log_output):
         self.df = None
         self.data_path = data_path
         self.data_output = data_output
@@ -16,18 +17,32 @@ class Preprocessor:
         self.encoders = None
         self.scaler = None
 
+        # Logging Config
+        logging.basicConfig(
+            filename=log_output,
+            encoding='utf-8',
+            filemode='a',
+            format='{asctime} - {levelname} - {message}',
+            style='{',
+            datefmt='%d/%m/%Y - %H:%M',
+            level=logging.DEBUG
+        )
+
     def __load_data(self, data_path):
         print('[INFO] - Loading the Dataset...')
+        logging.info('Loading the Dataset...')
 
         try:
             # Load Dataset
             self.df = dd.read_csv(data_path)
         except FileNotFoundError:
             print(f"[CRITICAL] - File NOT exists, please check the path:", data_path)
+            logging.critical(f'File NOT exists, please check the path: {data_path}')
             raise FileNotFoundError(f"Dataset not found at: {data_path}")
 
     def __extract_ip_octets(self):
         print('[INFO] - Extracting Octets of IP Address...')
+        logging.info('Extracting Octets of IP Address...')
 
         # Divide IP into 4 Octets
         octets = self.df['IP Address'].str.split('.', n=3, expand=True)
@@ -38,6 +53,7 @@ class Preprocessor:
 
     def __extract_hour_and_day_of_week(self):
         print('[INFO] - Extracting Hour and Day of the Week...')
+        logging.info('Extracting Hour and Day of the Week...')
 
         # Turn Time to DateTime Object
         self.df['Login Timestamp'] = dd.to_datetime(self.df['Login Timestamp'], format='%Y-%m-%d %H:%M:%S.%f')
@@ -48,18 +64,21 @@ class Preprocessor:
 
     def __extract_browser_name(self):
         print('[INFO] - Extracting Browser Name...')
+        logging.info('Extracting Browser Name...')
 
         # Extract the Browser Name using Regex
         self.df['browser_name'] = self.df['Browser Name and Version'].str.extract(r'^([^\d]*\d*\s?[A-Za-z]+)', expand=False)
 
     def __extract_os_name(self):
         print('[INFO] - Extracting OS Name...')
+        logging.info('Extracting OS Name...')
 
         # Extract the OS Name using Regex
         self.df['os_name'] = self.df['OS Name and Version'].str.extract(r'^(.*?)(?:\s+\d+.*)?$', expand=False).str.strip()
 
     def __drop_columns(self):
         print('[INFO] - Dropping Columns...')
+        logging.info('Dropping Columns...')
 
         # Column Names to Drop
         columns_to_drop = [
@@ -72,6 +91,7 @@ class Preprocessor:
 
     def __rename_columns(self):
         print('[INFO] - Renaming Columns...')
+        logging.info('Renaming Columns...')
 
         # Renaming Dictionary
         rename_dict = {
@@ -87,6 +107,7 @@ class Preprocessor:
 
     def __handle_null(self):
         print('[INFO] - Dropping NaN Values...')
+        logging.info('Dropping NaN Values...')
 
         # Calculate the Size before and after NaNs
         original_len = len(self.df)
@@ -99,6 +120,7 @@ class Preprocessor:
     @staticmethod
     def handle_duplicates(dataframe):
         print('[INFO] - Dropping Duplicated Values...')
+        logging.info('Dropping Duplicated Values...')
 
         # Calculate the Size before and after duplicates
         original_len = len(dataframe)
@@ -112,6 +134,7 @@ class Preprocessor:
 
     def process_features(self, output=False):
         print('[INFO] - Starting to Preprocess Dataset...')
+        logging.info('Starting to Preprocess Dataset...')
 
         # Load the Dataset
         self.__load_data(self.data_path)
@@ -136,6 +159,7 @@ class Preprocessor:
 
     def encode_train(self, output=False):
         print("[INFO] - Encoding Columns...")
+        logging.info('Encoding Columns...')
 
         # Check if Dask DataFrame
         if isinstance(self.df, dd.DataFrame):
@@ -166,6 +190,7 @@ class Preprocessor:
 
     def scale_train(self, output=False):
         print("[INFO] - Scaling Columns...")
+        logging.info('Scaling Columns...')
 
         # Check if Dask DataFrame
         if isinstance(self.df, dd.DataFrame):
@@ -191,6 +216,7 @@ class Preprocessor:
 
     def cast_types(self, force_dask, output=False):
         print("[INFO] - Casting Data Types...")
+        logging.info('Casting Data Types...')
 
         # Check if Pandas DataFrame
         if isinstance(self.df, pd.DataFrame) and force_dask:
@@ -219,6 +245,7 @@ class Preprocessor:
 
     def save_dataset(self):
         print(f'[INFO] - Saving Dataset to {self.data_output}/preprocessed.csv')
+        logging.info(f'Saving Dataset to {self.data_output}/preprocessed.csv')
 
         # Create the Full Path
         full_path = os.path.join(self.data_output, 'preprocessed.csv')
@@ -230,9 +257,11 @@ class Preprocessor:
         self.df.to_csv(full_path, index=False, single_file=True)
 
         print(f'[SUCCESS] - Dataset Saved to {self.data_output}/preprocessed.csv')
+        logging.info(f'Dataset Saved to {self.data_output}/preprocessed.csv')
 
     def save_encoders(self):
         print(f'[INFO] - Saving Encoders to {self.model_output}/label_encoders.pkl')
+        logging.info(f'Saving Encoders to {self.model_output}/label_encoders.pkl')
 
         # Create the Full Path
         full_path = os.path.join(self.model_output, 'label_encoders.pkl')
@@ -244,9 +273,11 @@ class Preprocessor:
         joblib.dump(self.encoders, full_path)
 
         print(f'[SUCCESS] - Encoders Saved to {self.model_output}/label_encoders.pkl')
+        logging.info(f'Encoders Saved to {self.model_output}/label_encoders.pkl')
 
     def save_scaler(self):
         print(f'[INFO] - Saving Scaler to {self.model_output}/minmax_scaler.pkl')
+        logging.info(f'Saving Scaler to {self.model_output}/minmax_scaler.pkl')
 
         # Create the Full Path
         full_path = os.path.join(self.model_output, 'minmax_scaler.pkl')
@@ -258,21 +289,24 @@ class Preprocessor:
         joblib.dump(self.scaler, full_path)
 
         print(f'[SUCCESS] - Scaler Saved to {self.model_output}/minmax_scaler.pkl')
+        logging.info(f'Scaler Saved to {self.model_output}/minmax_scaler.pkl')
 
     def get_df(self):
         print('[INFO] - Returning DataFrame...')
+        logging.info('Returning DataFrame...')
 
         # Return the DataFrame
         return self.df
 
     def get_encoders(self):
         print('[INFO] - Returning Encoders...')
-
+        logging.info('Returning Encoders...')
         # Return the Encoders
         return self.encoders
 
     def get_scaler(self):
         print('[INFO] - Returning Scaler...')
+        logging.info('Returning Scaler...')
 
         # Return the Scaler
         return self.scaler

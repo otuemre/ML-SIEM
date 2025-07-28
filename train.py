@@ -86,7 +86,13 @@ def train(model, X_train, epochs, batch_size, val_split, shuffle, callbacks):
     return history
 
 if __name__ == '__main__':
-    processor = Preprocessor('data/rba-dataset.csv', 'data/train/preprocessed', 'data/train/models')
+
+    processor = Preprocessor(
+        'data/rba-dataset.csv',
+        'data/train/preprocessed',
+        'data/train/models',
+        'logs/a.log'
+    )
     processor.process_features()
     processor.encode_train()
     processor.scale_train()
@@ -97,26 +103,26 @@ if __name__ == '__main__':
 
     ddf = processor.get_df()
 
-    X_train, X_test, y_test = split_test_train(ddf)
-
-    X_train = processor.handle_duplicates(X_train)
-
-    autoencoder = create_autoencoder(X_train)
-    early_stop, lr_scheduler = create_callbacks()
-    history = train(
-        autoencoder,
-        X_train[:100_000],
-        1,
-        8,
-        0.1,
-        True,
-        [early_stop, lr_scheduler]
-    )
-
-    X_test_pred = autoencoder.predict(X_test, batch_size=256, verbose=1)
-    mse = np.mean(np.power(X_test - X_test_pred, 2), axis=1)
-
-    threshold = np.percentile(mse[y_test == 0], 95)
-    y_pred = (mse > threshold).astype(int)
-    print(confusion_matrix(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
+    # X_train, X_test, y_test = split_test_train(ddf)
+    #
+    # X_train = processor.handle_duplicates(X_train)
+    #
+    # autoencoder = create_autoencoder(X_train)
+    # early_stop, lr_scheduler = create_callbacks()
+    # history = train(
+    #     autoencoder,
+    #     X_train[:100_000],
+    #     1,
+    #     8,
+    #     0.1,
+    #     True,
+    #     [early_stop, lr_scheduler]
+    # )
+    #
+    # X_test_pred = autoencoder.predict(X_test, batch_size=256, verbose=1)
+    # mse = np.mean(np.power(X_test - X_test_pred, 2), axis=1)
+    #
+    # threshold = np.percentile(mse[y_test == 0], 95)
+    # y_pred = (mse > threshold).astype(int)
+    # print(confusion_matrix(y_test, y_pred))
+    # print(classification_report(y_test, y_pred))
