@@ -13,7 +13,7 @@ from utils.preprocessor import Preprocessor
 # Config
 DATA_PATH = './data/'
 DATA_OUTPUT = './data/train/'
-MODEL_DIR = './models/train/'
+MODEL_DIR = 'src/models/train/'
 SCALER_PATH = os.path.join(MODEL_DIR, 'min_max_scaler.pkl')
 ENCODER_PATH = os.path.join(MODEL_DIR, 'label_encoder.pkl')
 AUTOENCODER_PATH = os.path.join(MODEL_DIR, 'autoencoder_model.h5')
