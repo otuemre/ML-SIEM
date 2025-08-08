@@ -1,27 +1,32 @@
-import sys
+from typing import Optional
 
-def error_message_detail(err, err_detail: sys) -> str:
+def error_message_detail(err: BaseException) -> str:
     """
-    This function takes the error and returns a custom error message.
-    :param err:
-    :param err_detail:
-    :return:
+    Build a readable error message from an exception, including file and line.
     """
+    tb = err.__traceback__
+    # Walk to the last frame (where the error actually occurred)
+    while tb and tb.tb_next:
+        tb = tb.tb_next
 
-    _, _,exc_tb = err_detail.exc_info()
-    file_name = exc_tb.tb_frame.f_code.co_filename
-    err_msg = ("Error Occurred in Python Script\n"
-               "Name:            [{0}]\n"
-               "Line Number:     [{1}]\n"
-               "Error Message:   [{2}]").format(file_name, exc_tb.tb_lineno, str(err))
-
-    return err_msg
+    file_name = tb.tb_frame.f_code.co_filename if tb else "<unknown>"
+    line_no = tb.tb_lineno if tb else -1
+    return (
+        "Error Occurred in Python Script\n"
+        f"Name:            [{file_name}]\n"
+        f"Line Number:     [{line_no}]\n"
+        f"Error Message:   [{err}]"
+    )
 
 class CustomException(Exception):
-    def __init__(self, err_msg, err_detail: sys):
-        super().__init__(err_msg)
+    """
+    Wraps an underlying exception with nicer context while preserving the cause.
+    """
+    def __init__(self, message: str, *, cause: Optional[BaseException] = None):
+        self.message = message
+        self.cause = cause
+        detail = error_message_detail(cause) if cause else message
+        super().__init__(f"{message}\n{detail}" if cause else message)
 
-        self.err_msg = error_message_detail(err_msg, err_detail)
-
-    def __str__(self):
-        return self.err_msg
+    def __str__(self) -> str:
+        return self.args[0]
