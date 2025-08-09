@@ -1,54 +1,77 @@
-import os
-import sys
+from dataclasses import dataclass
+from pathlib import Path
 import dask.dataframe as dd
 
-from src.logger import logging
 from src.exception import CustomException
+from src.logger import get_logger
 
-from sklearn.model_selection import train_test_split
-from dataclasses import dataclass
+logger = get_logger(__name__)
 
 @dataclass
 class DataIngestionConfig:
-    train_data_path: str = os.path.join('artifacts', 'train.csv')
-    test_data_path: str = os.path.join('artifacts', 'test.csv')
-    raw_data_path: str = os.path.join('artifacts', 'data.csv')
+    # Write as a Dask Parquet dataset (directory)
+    raw_data_dir: Path = Path("artifacts/data/raw")
 
 class DataIngestion:
-    def __init__(self):
-        self.ingestion_config = DataIngestionConfig()
+    def __init__(self, config: DataIngestionConfig | None = None):
+        self.config = config or DataIngestionConfig()
+        self.config.raw_data_dir.mkdir(parents=True, exist_ok=True)
 
-    def initiate_data_ingestion(self):
-        logging.info("Entered the Data Ingestion Method/Component...")
+    def _normalize_columns(self, df: dd.DataFrame) -> dd.DataFrame:
+        """
+        Lowercase + snake_case the columns and fix known header variants.
+        """
+        # snake-case all columns
+        rename_map = {c: c.strip().lower().replace(" ", "_") for c in df.columns}
+        df = df.rename(columns=rename_map)
 
+        return df
+
+    def run(self, source_path: str = "data/rba-dataset.csv") -> Path:
+        """
+        Read raw dataset (CSV or Parquet), normalize headers, persist as Parquet.
+        Returns the directory path of the Parquet dataset.
+        """
         try:
-            df = dd.read_csv('data/rba-dataset.csv')
-            logging.info("The dataset has been loaded...")
+            logger.info("Starting data ingestion from %s", source_path)
 
-            os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
-            df.to_csv(self.ingestion_config.raw_data_path, index=False, single_file=True)
+            if source_path.endswith(".parquet"):
+                df = dd.read_parquet(source_path)
+            else:
+                df = dd.read_csv(source_path, assume_missing=True, blocksize="64MB")
 
-            logging.info("Train-Test split has been initiated...")
-            normal_data = df[df['Is Account Takeover'] == 0]
-            anomalous_data = df[df['Is Account Takeover'] == 1]
+            logger.info("Loaded raw dataset with %d columns", len(df.columns))
 
-            train_set = normal_data.sample(frac=0.8, random_state=42)
-            remaining_normal = dd.concat([normal_data, train_set]).drop_duplicates()
-            test_set = dd.concat([remaining_normal, anomalous_data])
+            df = self._normalize_columns(df)
 
-            train_set.to_csv(self.ingestion_config.train_data_path, index=False, single_file=True)
-            test_set.to_csv(self.ingestion_config.test_data_path, index=False, single_file=True)
-            logging.info("Ingestion of data is completed...")
+            # Quick sanity logs
+            row_count = df.shape[0].compute()
+            logger.info("Normalized columns: %s", list(df.columns))
+            logger.info("Row count (approx): %s", row_count)
 
-            return (
-                self.ingestion_config.train_data_path,
-                self.ingestion_config.test_data_path
-            )
+            # Persist as Parquet dataset (partitioned). Overwrite safely.
+            out_dir = self.config.raw_data_dir
+            if out_dir.exists():
+                # avoid mixing old/new partitions during dev
+                for p in out_dir.glob("*"):
+                    if p.is_file():
+                        p.unlink()
+                    else:
+                        # remove partition dirs
+                        for q in p.rglob("*"):
+                            if q.is_file():
+                                q.unlink()
+                        p.rmdir()
+
+            df.to_parquet(out_dir.as_posix(), write_index=False)
+            logger.info("Wrote raw Parquet dataset to %s", out_dir)
+
+            return out_dir
 
         except Exception as e:
-            logging.critical(str(e))
-            raise CustomException(e, sys)
+            logger.critical("Data ingestion failed: %s", e)
+            raise CustomException("Data ingestion failed", cause=e) from e
 
 if __name__ == '__main__':
-    obj = DataIngestion()
-    obj.initiate_data_ingestion()
+    data_ingestion = DataIngestion()
+    output_dir = data_ingestion.run()
